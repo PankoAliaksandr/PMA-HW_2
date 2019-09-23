@@ -1,0 +1,355 @@
+\documentclass[12pt]{article}
+\usepackage[english]{babel}
+\usepackage{natbib}
+\usepackage{url}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\graphicspath{{images/}}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{vmargin}
+\setmarginsrb{3 cm}{2.5 cm}{3 cm}{2.5 cm}{1 cm}{1.5 cm}{1 cm}{1.5 cm}
+
+\title{Assignment 1 - Report}								% Title
+\author{Ngo Lam, Pankow Alex}								% Author
+\date{25 Nov 2018}											% Date
+
+\makeatletter
+\let\thetitle\@title
+\let\theauthor\@author
+\let\thedate\@date
+\makeatother
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\theauthor}
+\lhead{\thetitle}
+\cfoot{\thepage}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{titlepage}
+	{\centering 
+    \vspace*{0.5 cm}
+    \includegraphics[scale = 0.5]{C:/Users/lamng/OneDrive/Documents/Academics/Y2P2 PF Applications/Ex1/logo.png}\\[1.0 cm]	% University Logo
+    \textsc{\LARGE Portfolio Management - Applications}\\[2.0 cm]	% University Name
+	\textsc{\Large Value factor}\\[0.5 cm]				% Course Code
+	\rule{\linewidth}{0.2 mm} \\[0.4 cm]
+	{ \huge \bfseries \thetitle}\\
+	\rule{\linewidth}{0.2 mm} \\[1.5 cm]
+	
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushleft} \large
+			\emph{Submitted To:}\\
+			Prof. Otto Randl \\
+			WU Vienna
+			\end{flushleft}
+			\end{minipage}~
+			\begin{minipage}{0.4\textwidth}
+            
+			\begin{flushright} \large
+			\emph{Submitted By:} \\
+			      Lam Ngo\\
+            Pankow Alex\\
+		\end{flushright}
+        
+	\end{minipage}\\[2 cm]
+	}
+	
+	\end{titlepage}
+%\pagebreak    
+<<echo=false, results=hide>>=  
+load("C:/Users/lamng/OneDrive/Documents/Academics/Y2P2 PF Applications/Ex2/Ex2.RData")
+
+#5 factor
+ta <- numeric()
+rsa <- numeric()
+betas <- matrix(rep(-100, 500), nrow = 5)
+intera <- numeric()
+for (i in 1:100) {
+  betas[,i]<- lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,4]+DT[,5]+DT[,6])$coefficients[2:6]
+  ta[i]<-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,4]+DT[,5]+DT[,6])))[,"t value"][3]
+  rsa[i]<- summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,4]+DT[,5]+DT[,6]))$r.squared
+  intera[i] <-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,4]+DT[,5]+DT[,6])))[1]
+}
+#mean(betas[3,])
+#mean(ta)
+#mean(rsa)
+#mean(intera)
+gammas <- matrix(rep(-100, 644*5), ncol = 5)
+
+for (i in 1:length(DT[,1])) {
+  gammas[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~betas[1,]+betas[2,]+betas[3,]+betas[4,]+betas[5,])$coefficients[2:6]
+  #ta[i] <- coef(summary(lm(unlist(DT[i,8:107])-DT[,"RF"][i]~betas[1,]+betas[2,]+betas[3,]+betas[4,]+betas[5,])))[,"t value"][3]
+}
+riskp <- numeric()
+riskp <- c(mean(gammas[,1]), mean(gammas[,2]), mean(gammas[,3]), mean(gammas[,4]), mean(gammas[,5]))
+sda <- numeric()
+for (i in 1:5) {
+  sda <- c(sda, 1/length(DT[,1])^2*mean((gammas[,i]-riskp[1])^2))
+}
+
+
+gammas2 <- matrix(rep(-100, 644*5), ncol = 5)
+
+for (i in 1:length(DT[,1])) {
+  gammas2[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~0+betas[1,]+betas[2,]+betas[3,]+betas[4,]+betas[5,])$coefficients[1:5]
+}
+riskp2 <- numeric()
+riskp2 <- c(mean(gammas2[,1]), mean(gammas2[,2]), mean(gammas2[,3]), mean(gammas2[,4]), mean(gammas2[,5]))
+
+sda2 <- numeric()
+for (i in 1:5) {
+  sda2 <- c(sda2, 1/length(DT[,1])^2*mean((gammas2[,i]-riskp2[1])^2))
+}
+
+#wihout HML
+betasb <- matrix(rep(-100, 400), nrow = 4)
+tb <- numeric()
+rsb <- numeric()
+interb <- numeric()
+for (i in 1:100) {
+  betasb[,i]<- lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,5]+DT[,6])$coefficients[2:5]
+  tb[i]<-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,5]+DT[,6])))[,"t value"][3]
+  rsb[i]<- summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,5]+DT[,6]))$r.squared
+  interb[i] <-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,5]+DT[,6])))[1]
+}
+#mean(betasb[3,])
+#mean(tb)
+#mean(rsb)
+#mean(interb)
+gammasb <- matrix(rep(-100, 644*4), ncol = 4)
+
+for (i in 1:length(DT[,1])) {
+  gammasb[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~betasb[1,]+betasb[2,]+betasb[3,]+betasb[4,])$coefficients[2:5]
+}
+riskpb <- numeric()
+riskpb <- c(mean(gammasb[,1]), mean(gammasb[,2]), mean(gammasb[,3]), mean(gammasb[,4]))
+
+sdab <- numeric()
+for (i in 1:4) {
+  sdab <- c(sdab, 1/length(DT[,1])^2*mean((gammasb[,i]-riskpb[1])^2))
+}
+
+
+gammasb2 <- matrix(rep(-100, 644*4), ncol = 4)
+
+for (i in 1:length(DT[,1])) {
+  gammasb2[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~0+betasb[1,]+betasb[2,]+betasb[3,]+betasb[4,])$coefficients[1:4]
+}
+riskpb2 <- numeric()
+riskpb2 <- c(mean(gammasb2[,1]), mean(gammasb2[,2]), mean(gammasb2[,3]), mean(gammasb2[,4]))
+
+sdab2 <- numeric()
+for (i in 1:4) {
+  sdab2 <- c(sdab2, 1/length(DT[,1])^2*mean((gammasb2[,i]-riskpb2[1])^2))
+}
+
+
+#DEV-HML
+tc <- numeric()
+rsc<-numeric()
+interc <-numeric()
+betasc <- matrix(rep(-100, 500), nrow = 5)
+for (i in 1:100) {
+  betasc[,i]<- lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,109]+DT[,5]+DT[,6])$coefficients[2:6]
+  tc[i]<-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,109]+DT[,5]+DT[,6])))[,"t value"][3]
+  rsc[i]<- summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,109]+DT[,5]+DT[,6]))$r.squared
+  interc[i] <-coef(summary(lm(DT[,8+(i-1)]-DT[,"RF"] ~ DT[,2]+DT[,3]+DT[,109]+DT[,5]+DT[,6])))[1]
+}
+gammasc <- matrix(rep(-100, 644*5), ncol = 5)
+
+for (i in 1:length(DT[,1])) {
+  gammasc[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~betasc[1,]+betasc[2,]+betasc[3,]+betasc[4,]+betasc[5,])$coefficients[2:6]
+}
+riskpc <- numeric()
+riskpc <- c(mean(gammasc[,1]), mean(gammasc[,2]), mean(gammasc[,3]), mean(gammasc[,4]), mean(gammasc[,5]))
+
+sdac <- numeric()
+for (i in 1:5) {
+  sdac <- c(sdac, 1/length(DT[,1])^2*mean((gammasc[,i]-riskpc[1])^2))
+}
+
+
+gammasc2 <- matrix(rep(-100, 644*5), ncol = 5)
+
+for (i in 1:length(DT[,1])) {
+  gammasc2[i,] <- lm(unlist(DT[i,8:107])-DT[,"RF"][i]~0+betasc[1,]+betasc[2,]+betasc[3,]+betasc[4,]+betasc[5,])$coefficients[1:5]
+}
+riskpc2 <- numeric()
+riskpc2 <- c(mean(gammasc2[,1]), mean(gammasc2[,2]), mean(gammasc2[,3]), mean(gammasc2[,4]), mean(gammasc2[,5]))
+
+sdac2 <- numeric()
+for (i in 1:5) {
+  sdac2 <- c(sdac2, 1/length(DT[,1])^2*mean((gammasc2[,i]-riskpc2[1])^2))
+}
+
+riskp <- matrix(riskp, nrow=1)
+sda  <- matrix(sda, nrow=1)
+riskp2 <- matrix(riskp2, nrow=1)
+sda2 <- matrix(sda2, nrow=1)
+riskpb <- matrix(riskpb, nrow=1)
+sdab <- matrix(sdab, nrow=1)
+riskpb2 <- matrix(riskpb2, nrow=1)
+sdab2 <- matrix(sdab2, nrow=1)
+riskpc <- matrix(riskpc, nrow=1)
+sdac <- matrix(sdac, nrow=1)
+riskpc2 <- matrix(riskpc2, nrow=1)
+sdac2 <- matrix(sdac2, nrow=1)
+colnames(riskp)<-c("Mkt-Rf", "SMB", "HML", "RMW", "CMA")
+colnames(riskp2)<-c("Mkt-Rf", "SMB", "HML", "RMW", "CMA")
+colnames(riskpb)<-c("Mkt-Rf", "SMB", "RMW", "CMA")
+colnames(riskpb2)<-c("Mkt-Rf", "SMB", "RMW", "CMA")
+colnames(riskpc)<-c("Mkt-Rf", "SMB", "HML-Dev", "RMW", "CMA")
+colnames(riskpc2)<-c("Mkt-Rf", "SMB", "HML-Dev", "RMW", "CMA")
+riskp
+sda
+riskp2
+sda2
+riskpb
+sdab
+riskpb2
+sdab2
+riskpc
+sdac
+riskpc2
+sdac2
+colnames(betas)<-colnames(DT[,8:107])
+a<-numeric()
+for (i in 8:107) {
+    a <- c(a,mean((na.omit(DT[,i]))))
+  }
+retmonth <- matrix(a, nrow=10, byrow = TRUE)
+colnames(retmonth)=c("BM1", "BM2","BM3", "BM4", "BM5", "BM6", "BM7", "BM8", "BM9", "BM10")
+retmonth #sorted returns
+
+b<- numeric()
+for (i in 1:10) {
+  b<- c(b, mean(retmonth[i]))
+}
+
+Valuef <- lm(DT[,"HML"]~DT[,"Mkt.RF"]+DT[,"SMB"]+DT[,"RMW"]+DT[,"CMA"]) #timeseries
+summary(Valuef)
+
+#bootstrap
+booty <- function(x, ss=length(x), n=100) {
+  #sigh <- sd(x)
+  sds <- numeric(ss)
+  for (i in 1:n) {
+    sds[i] <- sd(sample(x, ss, replace = TRUE))
+  }
+  mean(sds)
+}
+CI <- function(x, ss=length(x), n=100) {
+  em <- mean(x)
+  ci <- numeric(ss)
+  for (i in 1:n) {
+    ci[i] <- mean(sample(x, ss, replace = TRUE))
+  }
+  list(lower=2*em-as.numeric(quantile(ci, probs = 0.975)), higher=2*em-as.numeric(quantile(ci, probs = 0.025)))
+}
+bsda <- numeric()
+for (i in 1:5) {
+  bsda <- c(bsda, booty(gammas[,i]))
+}
+bsda2 <- numeric()
+for (i in 1:5) {
+  bsda2 <- c(bsda2, booty(gammas2[,i]))
+}
+bsdab <- numeric()
+for (i in 1:4) {
+  bsdab <- c(bsdab, booty(gammasb[,i]))
+}
+bsdab2 <- numeric()
+for (i in 1:4) {
+  bsdab2 <- c(bsdab2, booty(gammasb2[,i]))
+}
+bsdac <- numeric()
+for (i in 1:5) {
+  bsdac <- c(bsdac, booty(gammasc[,i]))
+}
+bsdac2 <- numeric()
+for (i in 1:5) {
+  bsdac2 <- c(bsdac2, booty(gammasc2[,i]))
+}
+cia <-list(list(), list(), list(), list(), list())
+for (i in 1:5) {
+  cia[[i]] <- CI(gammas[,i])
+}
+cia2 <-list(list(), list(), list(), list(), list())
+for (i in 1:5) {
+  cia2[[i]] <- CI(gammas2[,i])
+}
+cib <-list(list(), list(), list(), list())
+for (i in 1:4) {
+  cib[[i]] <- CI(gammasb[,i])
+}
+cib2 <-list(list(), list(), list(), list())
+for (i in 1:4) {
+  cib2[[i]] <- CI(gammasb2[,i])
+}
+cic <-list(list(), list(), list(), list(), list())
+for (i in 1:5) {
+  cic[[i]] <- CI(gammasc[,i])
+}
+cic2 <-list(list(), list(), list(), list(), list())
+for (i in 1:5) {
+  cic2[[i]] <- CI(gammasc2[,i])
+}
+bsda
+bsda2
+bsdab
+bsdab2
+bsdac
+bsdac2
+@
+
+
+
+\section{How to understand our solutions}
+
+
+\section{Declaring the intent to present}
+    We can both present.
+\section{Main part}
+First, we had a look at the mean returns of every portfolio, just to get a feeling. We control for size since we want to separate the size effect from the value effect.
+
+<<>>=
+retmonth
+@
+Overall one sees that the returns are increasing from low Book-to-market to high Book-to-Market ratio but with few exceptions. We take the mean of every column:
+<<>>=
+b
+@
+We get that BM decile 7 and 8 have the highest average return. We show these 2 tables just to get an intuition. Now we want to look at the Fama Macbeth procedure to derive risk premia and show whether the value factor is indeed relevant or not. \\
+We first ran the three time series regressions on the three different models. We get 5 betas for every portfolio.
+For the Fama-French Five-Factor Model, we get a mean of -0.0003 for the intercept (with t-statistic  -0.1515, i.e. it can be considered insignificant), +0.2175 for the loading on HML with a t-statistic of 16.0735 and an R-squared of 0.8077473. The high loading of on HML, the high t-statistic and the high R-squared speak for the HML-factor. These results are consistent Asness, Frazzini, Israel and Moskowitz (2015). The fit is good.\\
+When we estimated the model wihout the HML factor we get that R-squared is slightly reduced to 0.7846. The intercept is -0.0003 (with t-statistic -0.1445). \\
+If we use the the HML-Dev version of the value factor which uses recent data instead of 6 month old data, we get a loading of 0.1470 for the HML-Dev factor with t-value of 15.8868, r-squared 0.8011 and intercept -0.0003 (with t-statistic 0.1648). Overall this specification seems slightly worse than the original fama-french. This is consistent with Asness and Frazzini (2013). Only with the addition of Momentum factor the HML-Dev adds more value than the standard HML. Now we look at the estimated risk premias from the cross-sectional regression. The variables with a "2" at the end are regressed without intercept. 
+
+<<>>=
+riskp
+riskp2
+riskpb
+riskpb2
+riskpc
+riskpc2
+@
+
+
+When we do the regression of HML on the remaining 4 factors of the Fama French 5 factor model to see if value is redundant. We want to know whether HML can be explained by the other 4 factors and thus does not deliver additional information. 
+<<>>=
+Valuef <- lm(DT[,"HML"]~DT[,"Mkt.RF"]+DT[,"SMB"]+DT[,"RMW"]+DT[,"CMA"]) #timeseries
+summary(Valuef)
+@
+As we can see the coefficient for the market factor and the SMB factor are 0, while RMW and CMA are highly significant with loadings 0.1358 and 1.0079 and t-statistics 3.494 and 23.358. These 2 factor are the extension of the fama-french 3 factor model. From the regression we can see that value factor does not add any additional value because it is in the span of the other 2 factors. 
+
+
+
+\section{References}
+The Devil in HML's Details
+\end{document}
